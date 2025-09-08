@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { getWeather } from "@/lib/getWeather"
+import { getTraffic } from "@/lib/getTraffic"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -100,8 +101,11 @@ export default function SafetyForecast() {
         }
       }
       try {
-        const weatherData = await getWeather(lat, lon)
-        // Map OpenWeatherMap data to SafetyData.weather
+        const [weatherData, trafficData] = await Promise.all([
+          getWeather(lat, lon),
+          getTraffic(lat, lon),
+        ])
+        // Weather mapping
         let condition: SafetyData["weather"]["condition"] = "sunny"
         const main = weatherData.weather && weatherData.weather[0] ? weatherData.weather[0].main.toLowerCase() : ""
         if (main.includes("cloud")) condition = "cloudy"
@@ -110,6 +114,23 @@ export default function SafetyForecast() {
         else if (main.includes("sun") || main.includes("clear")) condition = "sunny"
         const temp = weatherData.main ? weatherData.main.temp : 22
         const desc = weatherData.weather && weatherData.weather[0] ? weatherData.weather[0].description : "No data"
+        // Traffic mapping (TomTom API)
+        let trafficDensity: SafetyData["traffic"]["density"] = "medium"
+        let trafficDesc = "No traffic data"
+        let avgDelay = 0
+        if (trafficData && trafficData.flowSegmentData) {
+          const speed = trafficData.flowSegmentData.currentSpeed
+          const freeFlow = trafficData.flowSegmentData.freeFlowSpeed
+          avgDelay = Math.round(
+            ((freeFlow - speed) / freeFlow) * 10
+          ) // 0-10 scale
+          if (avgDelay <= 2) trafficDensity = "low"
+          else if (avgDelay <= 6) trafficDensity = "medium"
+          else trafficDensity = "high"
+          trafficDesc = `Current speed: ${speed} km/h, Free flow: ${freeFlow} km/h, Delay: ${avgDelay} min`
+        } else {
+          trafficDesc = "Traffic data not available"
+        }
         const data: SafetyData = {
           weather: {
             condition,
@@ -117,9 +138,9 @@ export default function SafetyForecast() {
             description: desc,
           },
           traffic: {
-            density: "medium",
-            description: "Traffic data not integrated yet",
-            avgDelay: 10,
+            density: trafficDensity,
+            description: trafficDesc,
+            avgDelay,
           },
           riskScore: 3,
           lastUpdated: new Date().toISOString(),
@@ -177,8 +198,11 @@ export default function SafetyForecast() {
       }
     }
     try {
-      const weatherData = await getWeather(lat, lon)
-      // Map OpenWeatherMap data to SafetyData.weather
+      const [weatherData, trafficData] = await Promise.all([
+        getWeather(lat, lon),
+        getTraffic(lat, lon),
+      ])
+      // Weather mapping
       let condition: SafetyData["weather"]["condition"] = "sunny"
       const main = weatherData.weather && weatherData.weather[0] ? weatherData.weather[0].main.toLowerCase() : ""
       if (main.includes("cloud")) condition = "cloudy"
@@ -187,6 +211,23 @@ export default function SafetyForecast() {
       else if (main.includes("sun") || main.includes("clear")) condition = "sunny"
       const temp = weatherData.main ? weatherData.main.temp : 22
       const desc = weatherData.weather && weatherData.weather[0] ? weatherData.weather[0].description : "No data"
+      // Traffic mapping (TomTom API)
+      let trafficDensity: SafetyData["traffic"]["density"] = "medium"
+      let trafficDesc = "No traffic data"
+      let avgDelay = 0
+      if (trafficData && trafficData.flowSegmentData) {
+        const speed = trafficData.flowSegmentData.currentSpeed
+        const freeFlow = trafficData.flowSegmentData.freeFlowSpeed
+        avgDelay = Math.round(
+          ((freeFlow - speed) / freeFlow) * 10
+        ) // 0-10 scale
+        if (avgDelay <= 2) trafficDensity = "low"
+        else if (avgDelay <= 6) trafficDensity = "medium"
+        else trafficDensity = "high"
+        trafficDesc = `Current speed: ${speed} km/h, Free flow: ${freeFlow} km/h, Delay: ${avgDelay} min`
+      } else {
+        trafficDesc = "Traffic data not available"
+      }
       const newData: SafetyData = {
         weather: {
           condition,
@@ -194,9 +235,9 @@ export default function SafetyForecast() {
           description: desc,
         },
         traffic: {
-          density: "medium",
-          description: "Traffic data not integrated yet",
-          avgDelay: 10,
+          density: trafficDensity,
+          description: trafficDesc,
+          avgDelay,
         },
         riskScore: 3,
         lastUpdated: new Date().toISOString(),
