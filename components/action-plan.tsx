@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { getWeather } from "@/lib/getWeather"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -156,13 +157,28 @@ const mockChecklistItems: ChecklistItem[] = [
 ]
 
 export default function ActionPlan() {
+  // Get user profile from localStorage
+  const getUserProfile = () => {
+    try {
+      const savedProfile = localStorage.getItem("protestCopilot_userProfile")
+      if (savedProfile) {
+        return JSON.parse(savedProfile)
+      }
+    } catch (error) {
+      console.error("Error loading user profile:", error)
+    }
+    return null
+  }
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [weather, setWeather] = useState<any>(null)
+  const [dynamicSuggestions, setDynamicSuggestions] = useState<ChecklistItem[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const { toast } = useToast()
 
   // Load checklist state from localStorage
   useEffect(() => {
+    // Load checklist state from localStorage
     try {
       const savedChecklist = localStorage.getItem("protestCopilot_actionPlan")
       if (savedChecklist) {
@@ -179,9 +195,77 @@ export default function ActionPlan() {
     } catch (error) {
       console.error("Error loading action plan:", error)
       setChecklistItems(mockChecklistItems)
-    } finally {
-      setIsLoading(false)
     }
+    // Fetch weather data for user location
+    const profile = getUserProfile()
+    if (profile && profile.location) {
+      // Use a simple geocoding API to get lat/lon from city name
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(profile.location)}`)
+        .then((res) => res.json())
+        .then((geo) => {
+          if (geo && geo.length > 0) {
+            const lat = parseFloat(geo[0].lat)
+            const lon = parseFloat(geo[0].lon)
+            getWeather(lat, lon)
+              .then((weatherData) => {
+                setWeather(weatherData)
+                // Generate dynamic suggestions based on weather
+                const suggestions: ChecklistItem[] = []
+                if (weatherData.weather && weatherData.weather[0]) {
+                  const main = weatherData.weather[0].main.toLowerCase()
+                  if (main.includes("rain")) {
+                    suggestions.push({
+                      id: "rain-gear",
+                      text: "Bring waterproof gear (raincoat, umbrella, waterproof bag)",
+                      category: "bring",
+                      priority: "high",
+                      completed: false,
+                      description: "Rain is forecasted. Stay dry and protect electronics.",
+                    })
+                  }
+                  if (main.includes("snow")) {
+                    suggestions.push({
+                      id: "snow-gear",
+                      text: "Wear warm clothing and boots",
+                      category: "bring",
+                      priority: "high",
+                      completed: false,
+                      description: "Snow is forecasted. Dress warmly to avoid hypothermia.",
+                    })
+                  }
+                  if (weatherData.main && weatherData.main.temp < 5) {
+                    suggestions.push({
+                      id: "cold-weather",
+                      text: "Bring gloves and hat",
+                      category: "bring",
+                      priority: "medium",
+                      completed: false,
+                      description: "It's cold outside. Protect yourself from the cold.",
+                    })
+                  }
+                  if (weatherData.main && weatherData.main.temp > 28) {
+                    suggestions.push({
+                      id: "hot-weather",
+                      text: "Bring sunscreen and extra water",
+                      category: "bring",
+                      priority: "high",
+                      completed: false,
+                      description: "High temperatures expected. Stay hydrated and avoid sunburn.",
+                    })
+                  }
+                }
+                setDynamicSuggestions(suggestions)
+              })
+              .catch((err) => {
+                console.error("Weather fetch error:", err)
+              })
+          }
+        })
+        .catch((err) => {
+          console.error("Geocoding error:", err)
+        })
+    }
+    setIsLoading(false)
   }, [])
 
   // Save checklist state to localStorage
@@ -227,8 +311,10 @@ export default function ActionPlan() {
     { id: "legal", label: "Legal", icon: Shield },
   ]
 
+  // Merge dynamic suggestions with checklist items
+  const allItems = [...dynamicSuggestions, ...checklistItems]
   const filteredItems =
-    selectedCategory === "all" ? checklistItems : checklistItems.filter((item) => item.category === selectedCategory)
+    selectedCategory === "all" ? allItems : allItems.filter((item) => item.category === selectedCategory)
 
   const completedCount = checklistItems.filter((item) => item.completed).length
   const totalCount = checklistItems.length
