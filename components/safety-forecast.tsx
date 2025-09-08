@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { getWeather } from "@/lib/getWeather"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -67,68 +68,154 @@ export default function SafetyForecast() {
 
   // Generate initial data
   useEffect(() => {
-    // TODO: Replace with real API call
-    const data = {
-      weather: {
-        condition: "sunny",
-        temperature: 22,
-        description: "Clear skies, good visibility",
-      },
-      traffic: {
-        density: "low",
-        description: "Minimal delays expected",
-        avgDelay: 5,
-      },
-      riskScore: 3,
-      lastUpdated: new Date().toISOString(),
-      location: "Downtown",
-      recommendations: [
-        "Stay hydrated and wear appropriate clothing",
-        "Keep emergency contacts readily available",
-        "Plan multiple exit routes from event areas",
-      ],
-      trends: {
-        weather: "stable",
-        traffic: "improving",
-        safety: "stable",
-      },
+    // Get user profile from localStorage
+    const getUserProfile = () => {
+      try {
+        const savedProfile = localStorage.getItem("protestCopilot_userProfile")
+        if (savedProfile) {
+          return JSON.parse(savedProfile)
+        }
+      } catch (error) {
+        console.error("Error loading user profile:", error)
+      }
+      return null
     }
-    setSafetyData(data)
-    setIsLoading(false)
+    const fetchWeatherData = async () => {
+      setIsLoading(true)
+      const profile = getUserProfile()
+      let lat = -6.1751 // Default: Jakarta
+      let lon = 106.8650
+      let locationLabel = "Unknown"
+      if (profile && profile.location) {
+        try {
+          const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(profile.location)}`)
+          const geo = await geoRes.json()
+          if (geo && geo.length > 0) {
+            lat = parseFloat(geo[0].lat)
+            lon = parseFloat(geo[0].lon)
+            locationLabel = profile.location
+          }
+        } catch (err) {
+          console.error("Error fetching location geocode:", err)
+        }
+      }
+      try {
+        const weatherData = await getWeather(lat, lon)
+        // Map OpenWeatherMap data to SafetyData.weather
+        let condition: SafetyData["weather"]["condition"] = "sunny"
+        const main = weatherData.weather && weatherData.weather[0] ? weatherData.weather[0].main.toLowerCase() : ""
+        if (main.includes("cloud")) condition = "cloudy"
+        else if (main.includes("rain")) condition = "rainy"
+        else if (main.includes("storm")) condition = "stormy"
+        else if (main.includes("sun") || main.includes("clear")) condition = "sunny"
+        const temp = weatherData.main ? weatherData.main.temp : 22
+        const desc = weatherData.weather && weatherData.weather[0] ? weatherData.weather[0].description : "No data"
+        const data: SafetyData = {
+          weather: {
+            condition,
+            temperature: temp,
+            description: desc,
+          },
+          traffic: {
+            density: "medium",
+            description: "Traffic data not integrated yet",
+            avgDelay: 10,
+          },
+          riskScore: 3,
+          lastUpdated: new Date().toISOString(),
+          location: locationLabel,
+          recommendations: [
+            "Stay hydrated and wear appropriate clothing",
+            "Keep emergency contacts readily available",
+            "Plan multiple exit routes from event areas",
+          ],
+          trends: {
+            weather: "stable",
+            traffic: "stable",
+            safety: "stable",
+          },
+        }
+        setSafetyData(data)
+      } catch (err) {
+        setSafetyData(null)
+      }
+      setIsLoading(false)
+    }
+    fetchWeatherData()
   }, [])
 
   // Refresh data
   const refreshData = async () => {
     setIsRefreshing(true)
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    // TODO: Replace with real API call
-    const newData = {
-      weather: {
-        condition: "cloudy",
-        temperature: 18,
-        description: "Overcast, mild conditions",
-      },
-      traffic: {
-        density: "medium",
-        description: "Some congestion in key areas",
-        avgDelay: 15,
-      },
-      riskScore: 5,
-      lastUpdated: new Date().toISOString(),
-      location: "City Center",
-      recommendations: [
-        "Monitor local news for real-time updates",
-        "Travel in groups when possible",
-        "Keep emergency contacts readily available",
-      ],
-      trends: {
-        weather: "worsening",
-        traffic: "stable",
-        safety: "improving",
-      },
+    // Get user profile from localStorage
+    const getUserProfile = () => {
+      try {
+        const savedProfile = localStorage.getItem("protestCopilot_userProfile")
+        if (savedProfile) {
+          return JSON.parse(savedProfile)
+        }
+      } catch (error) {
+        console.error("Error loading user profile:", error)
+      }
+      return null
     }
-    setSafetyData(newData)
+    let lat = -6.1751 // Default: Jakarta
+    let lon = 106.8650
+    let locationLabel = "Unknown"
+    const profile = getUserProfile()
+    if (profile && profile.location) {
+      try {
+        const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(profile.location)}`)
+        const geo = await geoRes.json()
+        if (geo && geo.length > 0) {
+          lat = parseFloat(geo[0].lat)
+          lon = parseFloat(geo[0].lon)
+          locationLabel = profile.location
+        }
+      } catch (err) {
+        console.error("Error fetching location geocode:", err)
+      }
+    }
+    try {
+      const weatherData = await getWeather(lat, lon)
+      // Map OpenWeatherMap data to SafetyData.weather
+      let condition: SafetyData["weather"]["condition"] = "sunny"
+      const main = weatherData.weather && weatherData.weather[0] ? weatherData.weather[0].main.toLowerCase() : ""
+      if (main.includes("cloud")) condition = "cloudy"
+      else if (main.includes("rain")) condition = "rainy"
+      else if (main.includes("storm")) condition = "stormy"
+      else if (main.includes("sun") || main.includes("clear")) condition = "sunny"
+      const temp = weatherData.main ? weatherData.main.temp : 22
+      const desc = weatherData.weather && weatherData.weather[0] ? weatherData.weather[0].description : "No data"
+      const newData: SafetyData = {
+        weather: {
+          condition,
+          temperature: temp,
+          description: desc,
+        },
+        traffic: {
+          density: "medium",
+          description: "Traffic data not integrated yet",
+          avgDelay: 10,
+        },
+        riskScore: 3,
+        lastUpdated: new Date().toISOString(),
+        location: locationLabel,
+        recommendations: [
+          "Stay hydrated and wear appropriate clothing",
+          "Keep emergency contacts readily available",
+          "Plan multiple exit routes from event areas",
+        ],
+        trends: {
+          weather: "stable",
+          traffic: "stable",
+          safety: "stable",
+        },
+      }
+      setSafetyData(newData)
+    } catch (err) {
+      setSafetyData(null)
+    }
     setIsRefreshing(false)
   }
 

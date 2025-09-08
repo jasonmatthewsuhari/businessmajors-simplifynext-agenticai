@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { MapPin, Bell, Users, User, ClipboardList, Shield } from "lucide-react"
+import AWaSAssistantBubble from "@/components/awas-assistant-bubble"
 import { cn } from "@/lib/utils"
 import ProtestMap from "@/components/protest-map"
 import Notifications from "@/components/notifications"
@@ -77,18 +78,21 @@ export default function App() {
       <header className="sticky top-0 z-50 bg-card border-b border-border px-4 py-3">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-foreground">AWaS</h1>
-          <button
-            className="relative ml-auto flex items-center justify-center p-2 rounded-full hover:bg-muted"
-            onClick={() => setActiveTab("notifications")}
-            aria-label="Notifications"
-          >
-            <Bell className="h-6 w-6 text-foreground" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs font-bold">
-                {unreadCount > 9 ? "9+" : unreadCount}
-              </span>
-            )}
-          </button>
+          <div className="flex items-center gap-2 ml-auto">
+            <AWaSAssistantBubble />
+            <button
+              className="relative flex items-center justify-center p-2 rounded-full hover:bg-muted"
+              onClick={() => setActiveTab("notifications")}
+              aria-label="Notifications"
+            >
+              <Bell className="h-6 w-6 text-foreground" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs font-bold">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
