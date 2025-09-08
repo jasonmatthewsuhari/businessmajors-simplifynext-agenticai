@@ -1,10 +1,9 @@
-"use client"
 
-import { useState } from "react"
+"use client"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { MapPin, Bell, Users, User, ClipboardList, Shield } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-// Import components (will be created in subsequent tasks)
 import ProtestMap from "@/components/protest-map"
 import Notifications from "@/components/notifications"
 import Community from "@/components/community"
@@ -25,6 +24,22 @@ const navItems = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavItem>("map")
+  const router = useRouter()
+
+  useEffect(() => {
+    console.log("App mounted")
+  }, [])
+
+  useEffect(() => {
+    // Only run on main page, not login/signup
+    if (typeof window !== "undefined") {
+      const isAuth = localStorage.getItem("isAuthenticated") === "true"
+      const path = window.location.pathname
+      if (!isAuth && path === "/") {
+        router.replace("/login")
+      }
+    }
+  }, [router])
 
   const renderContent = () => {
     switch (activeTab) {
