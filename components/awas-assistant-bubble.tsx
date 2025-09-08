@@ -2,29 +2,33 @@ import React, { useState } from "react"
 import { MessageCircle } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { getAWaSChatGPTResponse } from "@/lib/getAWaSChatGPTResponse"
-import { getWebSearchResults } from "@/lib/getWebSearchResults"
+
+// Example civic event API (replace with real API)
+async function fetchProtestInfo(location: string, date: string) {
+  // Replace with a real civic events API (e.g., GDELT, local government, news)
+  // For demo, return mock data
+  return {
+    summary: `Protest in ${location} on ${date}. Organized by local civic group. Main demand: government transparency.`,
+    safetyAdvice: `Check weather and traffic before attending. Stay with groups, avoid high-risk areas, and follow local authorities' guidance.`,
+    suggestedActions: `Participate peacefully, share verified info, or support the cause online if you can't attend.`,
+    uncertainty: false,
+  }
+}
+
 export default function AWaSAssistantBubble() {
   const [open, setOpen] = useState(false)
   const [question, setQuestion] = useState("")
-  const [response, setResponse] = useState<string>("")
+  const [response, setResponse] = useState<any>(null)
   const [loading, setLoading] = useState(false)
 
-  // TODO: Use a secure method for API key (env, serverless, etc.)
-  const GPT_API_KEY = "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"
-  const GOOGLE_API_KEY = "AIzaSyAixy7j9MiXLNBQhNcJxnap1_uen-VF4M8"
-  const GOOGLE_CSE_ID = "66ea76eb35b1c49f7" // <-- Using provided CSE ID
   const handleAsk = async () => {
     setLoading(true)
-    try {
-      // Step 1: Get web search results
-      const webResults = await getWebSearchResults(question, GOOGLE_API_KEY, GOOGLE_CSE_ID)
-      // Step 2: Pass results to GPT
-      const gptResponse = await getAWaSChatGPTResponse(question, GPT_API_KEY, webResults)
-      setResponse(gptResponse)
-    } catch (err) {
-      setResponse("Unable to get response. Please try again later.")
-    }
+    // Simple parsing for location/date (replace with NLP or context)
+    let location = "your city"
+    let date = "today"
+    // TODO: Use NLP or context to extract location/date/type from question
+    const info = await fetchProtestInfo(location, date)
+    setResponse(info)
     setLoading(false)
   }
 
@@ -52,20 +56,12 @@ export default function AWaSAssistantBubble() {
               </Button>
               {response && (
                 <div className="space-y-2 text-sm">
-                  {/* Replace **Summary** etc. with <strong> for bold rendering */}
-                  <div
-                    className="whitespace-pre-wrap"
-                    dangerouslySetInnerHTML={{
-                      __html: response
-                        .replace(/\*\*Summary\*\*/g, '<strong>Summary</strong>')
-                        .replace(/\*\*Safety Advice\*\*/g, '<strong>Safety Advice</strong>')
-                        .replace(/\*\*Suggested Actions\*\*/g, '<strong>Suggested Actions</strong>')
-                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                        // Add a single <br> after each bullet or paragraph
-                        .replace(/(\n- [^\n]+)(?=\n)/g, '$1<br>')
-                        .replace(/([^\n])\n(?=[^\n])/g, '$1<br>'),
-                    }}
-                  />
+                  <div><strong>Summary:</strong> {response.summary}</div>
+                  <div><strong>Safety Advice:</strong> {response.safetyAdvice}</div>
+                  <div><strong>Suggested Actions:</strong> {response.suggestedActions}</div>
+                  {response.uncertainty && (
+                    <div className="text-xs text-muted-foreground">Some details are unavailable. Please check local news or official sources for updates.</div>
+                  )}
                 </div>
               )}
             </CardContent>
