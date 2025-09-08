@@ -58,59 +58,7 @@ const trafficLevels = [
   { level: "high" as const, color: "text-red-600", bg: "bg-red-50", description: "Heavy traffic, plan extra time" },
 ]
 
-// Generate random safety data
-const generateMockData = (): SafetyData => {
-  const weatherOptions = [
-    { condition: "sunny" as const, temp: 22, desc: "Clear skies, good visibility" },
-    { condition: "cloudy" as const, temp: 18, desc: "Overcast, mild conditions" },
-    { condition: "rainy" as const, temp: 15, desc: "Light rain, slippery surfaces" },
-    { condition: "stormy" as const, temp: 12, desc: "Heavy rain, poor visibility" },
-  ]
-
-  const trafficOptions = [
-    { density: "low" as const, delay: 5, desc: "Minimal delays expected" },
-    { density: "medium" as const, delay: 15, desc: "Some congestion in key areas" },
-    { density: "high" as const, delay: 30, desc: "Significant delays likely" },
-  ]
-
-  const locations = ["Downtown", "City Center", "University District", "Government Quarter", "Financial District"]
-
-  const weather = weatherOptions[Math.floor(Math.random() * weatherOptions.length)]
-  const traffic = trafficOptions[Math.floor(Math.random() * trafficOptions.length)]
-  const riskScore = Math.floor(Math.random() * 10) + 1
-
-  const recommendations = [
-    "Stay hydrated and wear appropriate clothing",
-    "Keep emergency contacts readily available",
-    "Plan multiple exit routes from event areas",
-    "Monitor local news for real-time updates",
-    "Travel in groups when possible",
-  ]
-
-  const trends = ["improving", "stable", "worsening"] as const
-
-  return {
-    weather: {
-      condition: weather.condition,
-      temperature: weather.temp,
-      description: weather.desc,
-    },
-    traffic: {
-      density: traffic.density,
-      description: traffic.desc,
-      avgDelay: traffic.delay,
-    },
-    riskScore,
-    lastUpdated: new Date().toISOString(),
-    location: locations[Math.floor(Math.random() * locations.length)],
-    recommendations: recommendations.slice(0, 3),
-    trends: {
-      weather: trends[Math.floor(Math.random() * trends.length)],
-      traffic: trends[Math.floor(Math.random() * trends.length)],
-      safety: trends[Math.floor(Math.random() * trends.length)],
-    },
-  }
-}
+// Real API calls will be used in the component logic below
 
 export default function SafetyForecast() {
   const [safetyData, setSafetyData] = useState<SafetyData | null>(null)
@@ -119,7 +67,32 @@ export default function SafetyForecast() {
 
   // Generate initial data
   useEffect(() => {
-    const data = generateMockData()
+    // TODO: Replace with real API call
+    const data = {
+      weather: {
+        condition: "sunny",
+        temperature: 22,
+        description: "Clear skies, good visibility",
+      },
+      traffic: {
+        density: "low",
+        description: "Minimal delays expected",
+        avgDelay: 5,
+      },
+      riskScore: 3,
+      lastUpdated: new Date().toISOString(),
+      location: "Downtown",
+      recommendations: [
+        "Stay hydrated and wear appropriate clothing",
+        "Keep emergency contacts readily available",
+        "Plan multiple exit routes from event areas",
+      ],
+      trends: {
+        weather: "stable",
+        traffic: "improving",
+        safety: "stable",
+      },
+    }
     setSafetyData(data)
     setIsLoading(false)
   }, [])
@@ -129,7 +102,32 @@ export default function SafetyForecast() {
     setIsRefreshing(true)
     // Simulate API call delay
     await new Promise((resolve) => setTimeout(resolve, 1000))
-    const newData = generateMockData()
+    // TODO: Replace with real API call
+    const newData = {
+      weather: {
+        condition: "cloudy",
+        temperature: 18,
+        description: "Overcast, mild conditions",
+      },
+      traffic: {
+        density: "medium",
+        description: "Some congestion in key areas",
+        avgDelay: 15,
+      },
+      riskScore: 5,
+      lastUpdated: new Date().toISOString(),
+      location: "City Center",
+      recommendations: [
+        "Monitor local news for real-time updates",
+        "Travel in groups when possible",
+        "Keep emergency contacts readily available",
+      ],
+      trends: {
+        weather: "worsening",
+        traffic: "stable",
+        safety: "improving",
+      },
+    }
     setSafetyData(newData)
     setIsRefreshing(false)
   }
