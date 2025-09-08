@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "leaflet/dist/leaflet.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -124,4 +125,45 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Leaflet map styling fixes */
+.leaflet-container {
+  height: 100% !important;
+  width: 100% !important;
+  cursor: crosshair !important; /* Default cursor for map interactions */
+}
+
+.leaflet-container.leaflet-clickable {
+  cursor: pointer !important;
+}
+
+.leaflet-container.leaflet-dragging {
+  cursor: move !important;
+}
+
+/* Override drag cursor when in selection mode */
+.leaflet-container.navigation-mode {
+  cursor: crosshair !important;
+}
+
+.leaflet-container.navigation-mode .leaflet-clickable {
+  cursor: crosshair !important;
+}
+
+.leaflet-tile {
+  border: none !important;
+}
+
+.leaflet-tile-container {
+  position: relative;
+}
+
+/* Fix for map tile loading and alignment */
+.leaflet-fade-anim .leaflet-tile {
+  opacity: 1 !important;
+}
+
+.leaflet-zoom-anim .leaflet-zoom-animated {
+  will-change: transform;
 }
